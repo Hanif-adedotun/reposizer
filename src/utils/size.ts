@@ -1,0 +1,20 @@
+export function formatSizeFromKb(sizeKb: number): string {
+  const sizeMb = sizeKb / 1024;
+  if (sizeMb < 1024) {
+    return `${sizeMb.toFixed(2)} MB`;
+  }
+
+  const sizeGb = sizeMb / 1024;
+  return `${sizeGb.toFixed(2)} GB`;
+}
+
+export function kbToMbRounded(sizeKb: number): number {
+  return Number((sizeKb / 1024).toFixed(2));
+}
+
+export function formatStars(value: number): string {
+  if (value >= 1000) {
+    return `${Math.round((value / 1000) * 10) / 10}k`;
+  }
+  return String(value);
+}
