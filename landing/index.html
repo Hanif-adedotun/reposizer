@@ -3,11 +3,12 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>reposizer | inspect size before clone</title>
+    <title>Reposizer | inspect size before clone</title>
     <meta
       name="description"
       content="Production-ready landing and docs for reposizer: a fast CLI to inspect GitHub repository sizes."
     />
+    <link rel="icon" type="image/png" href="/logo.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -19,8 +20,22 @@
   <body>
     <div class="ambient"></div>
     <header class="topbar">
-      <a href="/" class="brand">reposizer</a>
-      <nav>
+      <a href="/" class="brand">
+        <img src="/logo.png" alt="reposizer logo" class="brand-logo" />
+        <span>Reposizer</span>
+      </a>
+      <button
+        class="menu-toggle"
+        type="button"
+        aria-label="Toggle navigation menu"
+        aria-expanded="false"
+        aria-controls="site-nav"
+      >
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+      <nav id="site-nav">
         <a href="#docs">Docs</a>
         <a href="#quickstart">Quickstart</a>
         <a
@@ -31,6 +46,8 @@
           ><svg
             class="github-mark"
             viewBox="0 0 24 24"
+            width="16"
+            height="16"
             aria-hidden="true"
             focusable="false"
           >
@@ -46,15 +63,14 @@
 
     <main class="page">
       <section class="hero reveal" id="quickstart">
-        <p class="kicker">CLI for GitHub repositories</p>
+        <p class="kicker">GitHub repository CLI</p>
         <h1>
-          Measure repository weight
-          <span>before the first clone.</span>
+          Check repository size
+          <span>before you clone.</span>
         </h1>
         <p class="hero-copy">
-          <code>reposizer</code> returns size, stars, and language instantly. Ideal
-          for engineering teams that need fast pre-clone triage and scriptable
-          output.
+          <code>reposizer</code> shows size, stars, and language in one command, so
+          you can avoid heavyweight repos and make faster technical decisions.
         </p>
         <div class="hero-cta">
           <a class="button primary" href="#docs">Read docs</a>
@@ -66,6 +82,8 @@
             ><svg
               class="github-mark"
               viewBox="0 0 24 24"
+              width="16"
+              height="16"
               aria-hidden="true"
               focusable="false"
             >
@@ -80,8 +98,8 @@
         <div class="terminal">
           <p class="prompt">$ npx reposizer torvalds/linux</p>
           <pre><code>Repository: torvalds/linux
-Size: 4.82 GB
-Stars: 190k
+Size: 6.02 GB
+Stars: 230.8k
 Language: C</code></pre>
         </div>
       </section>
@@ -92,32 +110,32 @@ Language: C</code></pre>
             <i data-lucide="zap"></i>
           </div>
           <h3>Zero setup</h3>
-          <p>Use with <code>npx</code>, no global install required.</p>
+          <p>Run with <code>npx</code>. No global install required.</p>
         </article>
         <article class="rise reveal">
           <div class="proof-icon" aria-hidden="true">
             <i data-lucide="workflow"></i>
           </div>
           <h3>Automation ready</h3>
-          <p>JSON output supports CI checks and custom scripts.</p>
+          <p>Use <code>--json</code> output in scripts and CI checks.</p>
         </article>
         <article class="rise reveal">
           <div class="proof-icon" aria-hidden="true">
             <i data-lucide="shield-check"></i>
           </div>
           <h3>Works with private repos</h3>
-          <p>Attach <code>GITHUB_TOKEN</code> and keep the same workflow.</p>
+          <p>Set <code>GITHUB_TOKEN</code> to inspect private repositories.</p>
         </article>
       </section>
 
       <section class="docs reveal" id="docs">
         <div class="docs-head">
-          <p class="kicker">Docs</p>
-          <h2>Usage snippets</h2>
+          <p class="kicker">Documentation</p>
+          <h2>Use reposizer in minutes</h2>
         </div>
 
         <article class="doc-card">
-          <h4>Install</h4>
+          <h4>Install options</h4>
           <pre><code class="language-bash"># recommended
 npx reposizer owner/repo
 
@@ -126,7 +144,7 @@ npm install -g reposizer</code></pre>
         </article>
 
         <article class="doc-card">
-          <h4>Core commands</h4>
+          <h4>Common commands</h4>
           <pre><code class="language-bash"># single repo
 reposizer openai/gym
 
@@ -144,24 +162,25 @@ reposizer org openai --limit 50 --json</code></pre>
         </article>
 
         <article class="doc-card">
-          <h4>JSON output</h4>
-          <pre><code class="language-bash">reposizer openai/gym --json</code></pre>
-          <pre><code class="language-json">{
-  "repository": "openai/gym",
-  "size_mb": 92.15,
-  "stars": 31000,
-  "language": "Python"
+          <h4>Scriptable JSON output</h4>
+          <pre><code class="language-bash">reposizer vercel/next.js --json</code></pre>
+          <pre><code class="language-json">
+{
+  "repository": "vercel/next.js",
+  "size_mb": 2491.76,
+  "stars": 139160,
+  "language": "JavaScript"
 }</code></pre>
         </article>
 
         <article class="doc-card">
-          <h4>Private repositories</h4>
+          <h4>Private repository access</h4>
           <pre><code class="language-bash">export GITHUB_TOKEN=your_token
 reposizer your-org/private-repo</code></pre>
         </article>
 
         <article class="doc-card">
-          <h4>Runtime requirement</h4>
+          <h4>Node.js requirement</h4>
           <pre><code class="language-bash"># Node.js >= 18
 node -v</code></pre>
         </article>

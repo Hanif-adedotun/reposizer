@@ -46,3 +46,21 @@ createIcons({
     strokeWidth: "2"
   }
 });
+
+const topbar = document.querySelector(".topbar");
+const menuToggle = document.querySelector(".menu-toggle");
+const siteNav = document.querySelector("#site-nav");
+
+if (topbar && menuToggle && siteNav) {
+  menuToggle.addEventListener("click", () => {
+    const isOpen = topbar.classList.toggle("menu-open");
+    menuToggle.setAttribute("aria-expanded", String(isOpen));
+  });
+
+  siteNav.querySelectorAll("a").forEach((link) => {
+    link.addEventListener("click", () => {
+      topbar.classList.remove("menu-open");
+      menuToggle.setAttribute("aria-expanded", "false");
+    });
+  });
+}
