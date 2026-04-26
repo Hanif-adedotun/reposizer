@@ -3,10 +3,10 @@
   "version": "0.1.0",
   "description": "Fast CLI to inspect GitHub repository sizes",
   "license": "MIT",
-  "author": "",
+  "author": "Hanif",
   "type": "commonjs",
   "bin": {
-    "reposizer": "./dist/bin/reposizer.js"
+    "reposizer": "dist/bin/reposizer.js"
   },
   "files": [
     "dist",
@@ -35,5 +35,17 @@
     "@types/node": "^22.13.10",
     "tsx": "^4.19.3",
     "typescript": "^5.8.2"
-  }
+  },
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Hanif-adedotun/reposizer.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Hanif-adedotun/reposizer/issues"
+  },
+  "homepage": "https://github.com/Hanif-adedotun/reposizer#readme"
 }
