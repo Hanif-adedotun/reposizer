@@ -1,6 +1,6 @@
 {
   "name": "reposizer",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "description": "Fast CLI to inspect GitHub repository sizes",
   "license": "MIT",
   "author": "Hanif",
@@ -47,5 +47,5 @@
   "bugs": {
     "url": "https://github.com/Hanif-adedotun/reposizer/issues"
   },
-  "homepage": "https://github.com/Hanif-adedotun/reposizer#readme"
+  "homepage": "https://reposizer.hanif.one"
 }
