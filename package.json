@@ -19,7 +19,9 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "dev": "tsx bin/reposizer.ts",
-    "check": "tsc --noEmit -p tsconfig.json"
+    "check": "tsc --noEmit -p tsconfig.json",
+    "video": "remotion studio remotion/index.js",
+    "video:render": "remotion render remotion/index.js ReposizerIntro out/reposizer-intro.mp4"
   },
   "keywords": [
     "cli",
@@ -29,7 +31,11 @@
     "typescript"
   ],
   "dependencies": {
-    "commander": "^12.1.0"
+    "@remotion/cli": "^4.0.452",
+    "commander": "^12.1.0",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5",
+    "remotion": "^4.0.452"
   },
   "devDependencies": {
     "@types/node": "^22.13.10",
