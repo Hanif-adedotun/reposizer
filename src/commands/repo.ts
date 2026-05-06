@@ -2,6 +2,7 @@ import {
   fetchOrganizationRepositories,
   fetchRepositoryMetadata
 } from "../services/github";
+import { getAnalyzePayload, runAnalyzeCommand } from "./analyze";
 import { detectCurrentRepositoryFromGitRemote } from "../utils/git";
 import { formatSizeFromKb, formatStars, kbToMbRounded } from "../utils/size";
 
@@ -112,12 +113,38 @@ function buildPayload(repositoryInput: string, metadata: Awaited<ReturnType<type
 
 export async function runRepositoriesCommand(
   repositoryInputs: string[],
-  jsonOutput: boolean
+  jsonOutput: boolean,
+  analyze = false
 ): Promise<void> {
   const effectiveInputs =
     repositoryInputs.length > 0
       ? repositoryInputs
       : [detectCurrentRepositoryFromGitRemote()];
+
+  if (analyze) {
+    if (jsonOutput) {
+      const payloads = await Promise.all(
+        effectiveInputs.map(async (input) => {
+          const { owner, repo } = parseRepository(input);
+          return getAnalyzePayload(owner, repo);
+        })
+      );
+      console.log(
+        JSON.stringify(payloads.length === 1 ? payloads[0] : payloads, null, 2)
+      );
+      return;
+    }
+
+    for (let i = 0; i < effectiveInputs.length; i++) {
+      const input = effectiveInputs[i]!;
+      const { owner, repo } = parseRepository(input);
+      await runAnalyzeCommand(owner, repo);
+      if (i < effectiveInputs.length - 1) {
+        console.log("");
+      }
+    }
+    return;
+  }
 
   const results = await Promise.all(
     effectiveInputs.map(async (input) => {

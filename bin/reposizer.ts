@@ -15,19 +15,32 @@ program
 program
   .argument("[repositories...]", "One or more repositories in owner/repo format")
   .option("--json", "Return machine-readable JSON output")
-  .action(async (repositories: string[] = [], options: { json?: boolean }) => {
-    try {
-      await runRepositoriesCommand(repositories, Boolean(options.json));
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Unexpected error occurred";
-      console.error(`Error: ${message}`);
-      process.exitCode = 1;
+  .option(
+    "--analyze",
+    "Approximate top-level directory sizes from Git tree metadata (no full clone)"
+  )
+  .action(
+    async (
+      repositories: string[] = [],
+      options: { json?: boolean; analyze?: boolean }
+    ) => {
+      try {
+        await runRepositoriesCommand(
+          repositories,
+          Boolean(options.json),
+          Boolean(options.analyze)
+        );
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "Unexpected error occurred";
+        console.error(`Error: ${message}`);
+        process.exitCode = 1;
+      }
     }
-  })
+  )
   .addHelpText(
     "after",
-    "\nExamples:\n  reposizer openai/gym\n  reposizer openai/gym vercel/next.js\n  reposizer --json"
+    "\nExamples:\n  reposizer openai/gym\n  reposizer openai/gym vercel/next.js\n  reposizer vercel/next.js --analyze\n  reposizer --json"
   );
 
 program

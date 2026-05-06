@@ -1,3 +1,18 @@
+export function formatBytes(bytes: number): string {
+  const mb = bytes / (1024 * 1024);
+  const gb = mb / 1024;
+  if (gb >= 1) {
+    return `${gb.toFixed(2)} GB`;
+  }
+  if (mb >= 1) {
+    return `${mb.toFixed(2)} MB`;
+  }
+  if (bytes >= 1024) {
+    return `${(bytes / 1024).toFixed(2)} KB`;
+  }
+  return `${bytes} B`;
+}
+
 export function formatSizeFromKb(sizeKb: number): string {
   const sizeMb = sizeKb / 1024;
   if (sizeMb < 1024) {
