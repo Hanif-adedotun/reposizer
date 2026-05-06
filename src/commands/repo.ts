@@ -2,24 +2,115 @@ import {
   fetchOrganizationRepositories,
   fetchRepositoryMetadata
 } from "../services/github";
-import { getAnalyzePayload, runAnalyzeCommand } from "./analyze";
+import {
+  getAnalyzePayload,
+  printAnalyzeResult,
+  runAnalyzeCommand
+} from "./analyze";
 import { detectCurrentRepositoryFromGitRemote } from "../utils/git";
 import { formatSizeFromKb, formatStars, kbToMbRounded } from "../utils/size";
 
-function parseRepository(input: string): { owner: string; repo: string } {
+export type MultiRepoSort = "size" | "stars" | "name";
+
+function parseRepository(
+  input: string,
+  position: number
+): { owner: string; repo: string } {
   const trimmed = input.trim();
   const match = /^([^/\s]+)\/([^/\s]+)$/.exec(trimmed);
   if (!match) {
-    throw new Error("Invalid repository format. Use owner/repo.");
+    throw new Error(
+      `Invalid repository at position ${position}: "${input}". Use owner/repo.`
+    );
   }
   return { owner: match[1], repo: match[2] };
+}
+
+type ParsedRepoArg = {
+  input: string;
+  owner: string;
+  repo: string;
+};
+
+function dedupeParsedArgs(items: ParsedRepoArg[]): ParsedRepoArg[] {
+  const seen = new Set<string>();
+  const out: ParsedRepoArg[] = [];
+  for (const item of items) {
+    const key = `${item.owner.toLowerCase()}/${item.repo.toLowerCase()}`;
+    if (seen.has(key)) {
+      continue;
+    }
+    seen.add(key);
+    out.push(item);
+  }
+  return out;
+}
+
+function parseRepositoryArgs(inputs: string[]): ParsedRepoArg[] {
+  const parsed: ParsedRepoArg[] = [];
+  for (let i = 0; i < inputs.length; i++) {
+    const input = inputs[i]!;
+    const { owner, repo } = parseRepository(input, i + 1);
+    parsed.push({ input, owner, repo });
+  }
+  return dedupeParsedArgs(parsed);
+}
+
+async function mapWithConcurrency<T, R>(
+  items: T[],
+  concurrency: number,
+  mapper: (item: T, index: number) => Promise<R>
+): Promise<R[]> {
+  if (items.length === 0) {
+    return [];
+  }
+  const results: R[] = new Array(items.length);
+  let nextIndex = 0;
+  const workerCount = Math.min(concurrency, items.length);
+
+  const worker = async () => {
+    while (true) {
+      const index = nextIndex;
+      nextIndex += 1;
+      if (index >= items.length) {
+        return;
+      }
+      results[index] = await mapper(items[index]!, index);
+    }
+  };
+
+  await Promise.all(Array.from({ length: workerCount }, () => worker()));
+  return results;
+}
+
+const REPO_METADATA_CONCURRENCY = 4;
+const ANALYZE_FETCH_CONCURRENCY = 2;
+
+function sortRepoRows(
+  rows: RepoOutputPayload[],
+  sort: MultiRepoSort
+): RepoOutputPayload[] {
+  const copy = [...rows];
+  if (sort === "size") {
+    copy.sort(
+      (a, b) =>
+        b.size_mb - a.size_mb || a.repository.localeCompare(b.repository)
+    );
+  } else if (sort === "stars") {
+    copy.sort(
+      (a, b) => b.stars - a.stars || a.repository.localeCompare(b.repository)
+    );
+  } else {
+    copy.sort((a, b) => a.repository.localeCompare(b.repository));
+  }
+  return copy;
 }
 
 export async function runRepoCommand(
   repositoryInput: string,
   jsonOutput: boolean
 ): Promise<void> {
-  const { owner, repo } = parseRepository(repositoryInput);
+  const { owner, repo } = parseRepository(repositoryInput, 1);
   const metadata = await fetchRepositoryMetadata(owner, repo);
 
   if (jsonOutput) {
@@ -114,20 +205,22 @@ function buildPayload(repositoryInput: string, metadata: Awaited<ReturnType<type
 export async function runRepositoriesCommand(
   repositoryInputs: string[],
   jsonOutput: boolean,
-  analyze = false
+  analyze = false,
+  sort: MultiRepoSort = "size"
 ): Promise<void> {
   const effectiveInputs =
     repositoryInputs.length > 0
       ? repositoryInputs
       : [detectCurrentRepositoryFromGitRemote()];
 
+  const parsedArgs = parseRepositoryArgs(effectiveInputs);
+
   if (analyze) {
     if (jsonOutput) {
-      const payloads = await Promise.all(
-        effectiveInputs.map(async (input) => {
-          const { owner, repo } = parseRepository(input);
-          return getAnalyzePayload(owner, repo);
-        })
+      const payloads = await mapWithConcurrency(
+        parsedArgs,
+        ANALYZE_FETCH_CONCURRENCY,
+        async (item) => getAnalyzePayload(item.owner, item.repo)
       );
       console.log(
         JSON.stringify(payloads.length === 1 ? payloads[0] : payloads, null, 2)
@@ -135,37 +228,56 @@ export async function runRepositoriesCommand(
       return;
     }
 
-    for (let i = 0; i < effectiveInputs.length; i++) {
-      const input = effectiveInputs[i]!;
-      const { owner, repo } = parseRepository(input);
-      await runAnalyzeCommand(owner, repo);
-      if (i < effectiveInputs.length - 1) {
+    if (parsedArgs.length === 1) {
+      const only = parsedArgs[0]!;
+      await runAnalyzeCommand(only.owner, only.repo);
+      return;
+    }
+
+    const payloads = await mapWithConcurrency(
+      parsedArgs,
+      ANALYZE_FETCH_CONCURRENCY,
+      async (item) => getAnalyzePayload(item.owner, item.repo)
+    );
+    for (let i = 0; i < payloads.length; i++) {
+      printAnalyzeResult(payloads[i]!);
+      if (i < payloads.length - 1) {
         console.log("");
       }
     }
     return;
   }
 
-  const results = await Promise.all(
-    effectiveInputs.map(async (input) => {
-      const { owner, repo } = parseRepository(input);
-      const metadata = await fetchRepositoryMetadata(owner, repo);
-      return buildPayload(input, metadata);
-    })
+  const results = await mapWithConcurrency(
+    parsedArgs,
+    REPO_METADATA_CONCURRENCY,
+    async (item) => {
+      const metadata = await fetchRepositoryMetadata(item.owner, item.repo);
+      return buildPayload(item.input, metadata);
+    }
   );
 
+  const sorted = sortRepoRows(results, sort);
+
   if (jsonOutput) {
-    console.log(JSON.stringify(results.length === 1 ? results[0] : results, null, 2));
+    console.log(
+      JSON.stringify(sorted.length === 1 ? sorted[0] : sorted, null, 2)
+    );
     return;
   }
 
-  for (const result of results) {
+  if (sorted.length === 1) {
+    const result = sorted[0]!;
     console.log(`Repository: ${result.repository}`);
     console.log(`Size: ${formatSizeFromKb(result.size_mb * 1024)}`);
     console.log(`Stars: ${formatStars(result.stars)}`);
     console.log(`Language: ${result.language}`);
-    console.log("");
+    return;
   }
+
+  console.log(`Comparing ${sorted.length} repositories (sorted by ${sort}):`);
+  console.log("");
+  console.log(renderOrgTable(sorted));
 }
 
 export async function runOrganizationCommand(

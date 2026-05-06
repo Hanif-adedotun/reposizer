@@ -49,9 +49,7 @@ export async function getAnalyzePayload(
   };
 }
 
-export async function runAnalyzeCommand(owner: string, repo: string): Promise<void> {
-  const payload = await getAnalyzePayload(owner, repo);
-
+export function printAnalyzeResult(payload: AnalyzeJsonResult): void {
   if (payload.truncated) {
     console.error(
       "Warning: Git tree response was truncated by GitHub; directory totals may be incomplete."
@@ -67,4 +65,9 @@ export async function runAnalyzeCommand(owner: string, repo: string): Promise<vo
   for (const { directory, bytes } of payload.top_directories) {
     console.log(`${directory.padEnd(15)} ${formatBytes(bytes)}`);
   }
+}
+
+export async function runAnalyzeCommand(owner: string, repo: string): Promise<void> {
+  const payload = await getAnalyzePayload(owner, repo);
+  printAnalyzeResult(payload);
 }
