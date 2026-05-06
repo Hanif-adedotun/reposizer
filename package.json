@@ -1,6 +1,6 @@
 {
   "name": "reposizer",
-  "version": "0.1.2",
+  "version": "0.2.1",
   "description": "Fast CLI to inspect GitHub repository sizes",
   "license": "MIT",
   "author": "Hanif",

@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Changelog | Reposizer</title>
+    <meta
+      name="description"
+      content="Reposizer release notes—what shipped, what improved, and how to install the latest CLI."
+    />
+    <link rel="icon" type="image/png" href="/logo.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Newsreader:opsz,wght@6..72,500;6..72,700&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <script type="module" src="/src/main.js"></script>
+  </head>
+  <body>
+    <div class="ambient"></div>
+    <header class="topbar">
+      <a href="/" class="brand">
+        <img src="/logo.png" alt="reposizer logo" class="brand-logo" />
+        <span>Reposizer</span>
+      </a>
+      <button
+        class="menu-toggle"
+        type="button"
+        aria-label="Toggle navigation menu"
+        aria-expanded="false"
+        aria-controls="site-nav"
+      >
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+      <nav id="site-nav">
+        <a href="/">Home</a>
+        <a href="/#docs">Docs</a>
+        <a href="/changelog.html" class="nav-current" aria-current="page">Changelog</a>
+        <a
+          class="github-link"
+          href="https://github.com/hanif-adedotun/reposizer"
+          target="_blank"
+          rel="noreferrer"
+          ><svg
+            class="github-mark"
+            viewBox="0 0 24 24"
+            width="16"
+            height="16"
+            aria-hidden="true"
+            focusable="false"
+          >
+            <path
+              d="M12 1.5C6.2 1.5 1.5 6.3 1.5 12.2c0 4.7 3 8.7 7.2 10.1.5.1.7-.2.7-.5v-1.9c-2.9.6-3.5-1.2-3.5-1.2-.5-1.3-1.2-1.7-1.2-1.7-1-.7.1-.7.1-.7 1.1.1 1.7 1.2 1.7 1.2 1 .1.7 2.6 2.9 2.4.1-.7.4-1.2.7-1.5-2.3-.3-4.8-1.2-4.8-5.3 0-1.2.4-2.2 1.1-3-.1-.3-.5-1.4.1-2.9 0 0 .9-.3 3 .9.9-.2 1.8-.3 2.7-.3s1.8.1 2.7.3c2.1-1.2 3-.9 3-.9.6 1.5.2 2.6.1 2.9.7.8 1.1 1.8 1.1 3 0 4.1-2.5 5-4.8 5.3.4.3.7 1 .7 2.1v3.1c0 .3.2.6.7.5 4.2-1.4 7.2-5.4 7.2-10.1C22.5 6.3 17.8 1.5 12 1.5z"
+              fill="currentColor"
+            />
+          </svg>
+          GitHub</a
+        >
+      </nav>
+    </header>
+
+    <main class="page">
+      <section class="changelog-hero reveal">
+        <p class="kicker"><span aria-hidden="true">📣</span> Release notes</p>
+        <h1>Changelog</h1>
+        <p class="changelog-lead">
+          What changed in <code>reposizer</code>, version by version. Ship the latest to your
+          machine with <code>npx reposizer@latest</code> or
+          <code>npm install -g reposizer@latest</code>.
+        </p>
+      </section>
+
+      <article class="changelog-entry reveal doc-card" id="v0-2-1">
+        <header class="changelog-version">
+          <h2><span aria-hidden="true">🚀</span> 0.2.1</h2>
+          <time class="changelog-date" datetime="2026-05-05">May 5, 2026</time>
+        </header>
+        <p class="changelog-meta">
+          <span aria-hidden="true">⬆️</span> Changes since <strong>0.1.2</strong>
+        </p>
+
+        <h3 class="changelog-section-title"><span aria-hidden="true">✨</span> Added</h3>
+        <ul class="changelog-list">
+          <li>
+            <span aria-hidden="true">📂</span>
+            <strong>Directory analysis (<code>--analyze</code>).</strong> Approximate
+            top-level folder sizes from GitHub’s recursive Git tree API—no full clone.
+            Use <code>reposizer owner/repo --analyze</code> or combine with
+            <code>--json</code> for machine-readable totals and directory breakdowns.
+            Truncated trees from GitHub surface a warning on stderr.
+          </li>
+          <li>
+            <span aria-hidden="true">🏢</span>
+            <strong>Organization scan (<code>reposizer org &lt;org&gt;</code>).</strong>
+            List repositories with size, stars, and language. Supports
+            <code>--limit</code> (1–100) and <code>--json</code>. Fetches additional
+            API pages until enough non-archived repositories are collected, or the
+            listing ends.
+          </li>
+          <li>
+            <span aria-hidden="true">📊</span>
+            <strong>Multi-repository comparison.</strong> Pass several
+            <code>owner/repo</code> arguments to get one comparison table. Use
+            <code>--sort size|stars|name</code> (default <code>size</code>). Duplicate
+            arguments are deduplicated case-insensitively. Invalid names fail before any
+            network request, with a 1-based position in your argument list.
+          </li>
+          <li>
+            <span aria-hidden="true">🎯</span>
+            <strong>Smarter default repository.</strong> Running <code>reposizer</code>
+            with no arguments resolves <code>owner/repo</code> from
+            <code>.git/config</code>: walk up to <code>.git</code>, support worktree
+            <code>gitdir:</code> files, read <code>remote &quot;origin&quot;</code>
+            URLs, and normalize common GitHub SSH and HTTPS forms.
+          </li>
+        </ul>
+
+        <h3 class="changelog-section-title"><span aria-hidden="true">⚡</span> Improved</h3>
+        <ul class="changelog-list">
+          <li>
+            <span aria-hidden="true">💬</span>
+            <strong>Org API errors.</strong> Clearer messaging for
+            <code>401</code>/<code>403</code> when listing organization repositories,
+            including guidance for private orgs and <code>GITHUB_TOKEN</code>.
+          </li>
+          <li>
+            <span aria-hidden="true">🛡️</span>
+            <strong>Rate-limit-friendly fetching.</strong> Bounded concurrency for
+            multi-repo metadata and parallel <code>--analyze</code> tree requests.
+          </li>
+        </ul>
+      </article>
+
+      <p class="changelog-back reveal">
+        <a class="button subtle" href="/">< Back to home</a>
+      </p>
+    </main>
+  </body>
+</html>
