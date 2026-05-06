@@ -22,7 +22,7 @@ type GitHubOrgRepoResponse = {
   private: boolean;
 };
 
-function createHeaders(token: string | undefined): HeadersInit {
+export function createHeaders(token: string | undefined): HeadersInit {
   const headers: HeadersInit = {
     Accept: "application/vnd.github+json",
     "User-Agent": "reposizer-cli"
@@ -35,7 +35,7 @@ function createHeaders(token: string | undefined): HeadersInit {
   return headers;
 }
 
-function getErrorMessage(status: number): string {
+export function getErrorMessage(status: number): string {
   if (status === 404) {
     return "Repository not found. Check the owner/repo value.";
   }
