@@ -38,6 +38,7 @@
       <nav id="site-nav">
         <a href="#docs">Docs</a>
         <a href="#quickstart">Quickstart</a>
+        <a href="/changelog.html">Changelog</a>
         <a
           class="github-link"
           href="https://github.com/hanif-adedotun/reposizer"
@@ -148,10 +149,13 @@ npm install -g reposizer</code></pre>
           <pre><code class="language-bash"># single repo
 reposizer openai/gym
 
-# multiple repos
-reposizer openai/gym vercel/next.js torvalds/linux
+# compare multiple repos (table + optional sort)
+reposizer vercel/next.js facebook/react --sort stars
 
-# detect current git remote
+# approximate directory sizes (no clone)
+reposizer vercel/next.js --analyze
+
+# detect current repo from .git/config
 reposizer</code></pre>
         </article>
 

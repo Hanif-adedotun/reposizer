@@ -82,6 +82,11 @@ nav a:hover {
   color: var(--ink);
 }
 
+a.nav-current {
+  color: var(--ink);
+  font-weight: 600;
+}
+
 nav a:last-child {
   color: var(--accent);
   font-weight: 600;
@@ -342,6 +347,89 @@ pre {
 code {
   font-family: "IBM Plex Mono", monospace;
   font-size: 0.86rem;
+}
+
+.changelog-hero {
+  padding: 1.5rem 0 2rem;
+}
+
+.changelog-hero h1 {
+  margin-top: 0.85rem;
+  font-size: clamp(2.2rem, 6vw, 3.2rem);
+  max-width: none;
+}
+
+.changelog-lead {
+  max-width: 62ch;
+  margin-top: 1rem;
+  color: var(--muted);
+  font-size: 1.02rem;
+}
+
+.changelog-entry {
+  margin-top: 1.5rem;
+}
+
+.changelog-version {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  margin-bottom: 0.35rem;
+}
+
+.changelog-version h2 {
+  font-size: 1.45rem;
+  font-weight: 700;
+}
+
+.changelog-date {
+  font-size: 0.9rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.changelog-meta {
+  margin: 0 0 1rem;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.changelog-section-title {
+  margin: 1.25rem 0 0.5rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+}
+
+.changelog-list {
+  margin: 0;
+  padding-left: 1.15rem;
+  color: var(--ink);
+}
+
+.changelog-list li {
+  margin-top: 0.65rem;
+  padding-left: 0.25rem;
+}
+
+.changelog-list li > span[aria-hidden="true"]:first-child {
+  margin-right: 0.35rem;
+}
+
+.changelog-list li:first-child {
+  margin-top: 0;
+}
+
+.changelog-list strong {
+  font-weight: 600;
+}
+
+.changelog-back {
+  margin-top: 2.5rem;
 }
 
 .footer {
