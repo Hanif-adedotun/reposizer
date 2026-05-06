@@ -191,5 +191,13 @@ export async function runOrganizationCommand(
   console.log(`Organization: ${organization}`);
   console.log(`Repositories scanned: ${payload.length}`);
   console.log("");
+
+  if (payload.length === 0) {
+    console.log(
+      "No repositories to show. The organization may have no visible repos, or all of them may be archived or disabled."
+    );
+    return;
+  }
+
   console.log(renderOrgTable(payload));
 }

@@ -78,41 +78,73 @@ export async function fetchRepositoryMetadata(
   };
 }
 
+function getOrganizationListErrorMessage(status: number): string {
+  if (status === 404) {
+    return "Organization not found.";
+  }
+  if (status === 401 || status === 403) {
+    return "Cannot access this organization’s repositories. If the org or its repos are private, set GITHUB_TOKEN. Otherwise verify rate limits and permissions.";
+  }
+  return getErrorMessage(status);
+}
+
 export async function fetchOrganizationRepositories(
   org: string,
   limit = 30,
   token = process.env.GITHUB_TOKEN
 ): Promise<RepoMetadata[]> {
   const safeLimit = Math.max(1, Math.min(limit, 100));
-  const endpoint = `https://api.github.com/orgs/${encodeURIComponent(org)}/repos?per_page=${safeLimit}&sort=updated&direction=desc`;
+  const collected: RepoMetadata[] = [];
+  const perPage = 100;
+  let page = 1;
+  const maxPages = 25;
 
-  let response: Response;
-  try {
-    response = await fetch(endpoint, {
-      method: "GET",
-      headers: createHeaders(token),
-      signal: AbortSignal.timeout(7000)
-    });
-  } catch {
-    throw new Error(
-      "Unable to reach GitHub API. Check your network and try again."
-    );
-  }
+  while (collected.length < safeLimit && page <= maxPages) {
+    const endpoint = `https://api.github.com/orgs/${encodeURIComponent(org)}/repos?per_page=${perPage}&page=${page}&sort=updated&direction=desc`;
 
-  if (!response.ok) {
-    if (response.status === 404) {
-      throw new Error("Organization not found.");
+    let response: Response;
+    try {
+      response = await fetch(endpoint, {
+        method: "GET",
+        headers: createHeaders(token),
+        signal: AbortSignal.timeout(7000)
+      });
+    } catch {
+      throw new Error(
+        "Unable to reach GitHub API. Check your network and try again."
+      );
     }
-    throw new Error(getErrorMessage(response.status));
+
+    if (!response.ok) {
+      throw new Error(getOrganizationListErrorMessage(response.status));
+    }
+
+    const data = (await response.json()) as GitHubOrgRepoResponse[];
+    if (!Array.isArray(data) || data.length === 0) {
+      break;
+    }
+
+    for (const repo of data) {
+      if (repo.archived || repo.disabled) {
+        continue;
+      }
+      collected.push({
+        fullName: repo.full_name,
+        sizeKb: repo.size,
+        stargazersCount: repo.stargazers_count,
+        language: repo.language
+      });
+      if (collected.length >= safeLimit) {
+        return collected;
+      }
+    }
+
+    if (data.length < perPage) {
+      break;
+    }
+
+    page += 1;
   }
 
-  const data = (await response.json()) as GitHubOrgRepoResponse[];
-  return data
-    .filter((repo) => !repo.archived && !repo.disabled)
-    .map((repo) => ({
-      fullName: repo.full_name,
-      sizeKb: repo.size,
-      stargazersCount: repo.stargazers_count,
-      language: repo.language
-    }));
+  return collected;
 }

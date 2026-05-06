@@ -40,7 +40,7 @@ program
   )
   .addHelpText(
     "after",
-    "\nExamples:\n  reposizer openai/gym\n  reposizer openai/gym vercel/next.js\n  reposizer vercel/next.js --analyze\n  reposizer --json"
+    "\nExamples:\n  reposizer openai/gym\n  reposizer openai/gym vercel/next.js\n  reposizer vercel/next.js --analyze\n  reposizer org vercel --limit 10\n  reposizer --json"
   );
 
 program
