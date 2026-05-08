@@ -1,4 +1,6 @@
 import { getRepoTree } from "../services/tree";
+import { formatCompactCount } from "../utils/size";
+
 type LocByLanguage = {
   language: string;
   lines: number;
@@ -188,9 +190,6 @@ export async function getLocPayload(
 }
 
 export function printLocResult(payload: LocJsonResult): void {
-  const formatLineCount = (value: number): string =>
-    new Intl.NumberFormat("en-US").format(value);
-
   if (payload.truncated) {
     console.error(
       "Warning: Git tree response was truncated by GitHub; LOC totals may be incomplete."
@@ -198,18 +197,24 @@ export function printLocResult(payload: LocJsonResult): void {
   }
 
   console.log(`Repository: ${payload.repository}`);
-  console.log(`Total LOC (approx): ${formatLineCount(payload.total_lines)}`);
+  console.log(
+    `Total LOC (approx): ${formatCompactCount(payload.total_lines)}`
+  );
   console.log("");
   console.log("Top languages:");
   console.log("--------------");
   for (const row of payload.by_language) {
-    console.log(`${row.language.padEnd(15)} ${formatLineCount(row.lines)}`);
+    console.log(
+      `${row.language.padEnd(15)} ${formatCompactCount(row.lines)}`
+    );
   }
   console.log("");
   console.log("Top directories:");
   console.log("----------------");
   for (const row of payload.by_directory) {
-    console.log(`${row.directory.padEnd(15)} ${formatLineCount(row.lines)}`);
+    console.log(
+      `${row.directory.padEnd(15)} ${formatCompactCount(row.lines)}`
+    );
   }
 }
 
