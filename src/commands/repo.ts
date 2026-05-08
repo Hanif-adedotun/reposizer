@@ -7,8 +7,14 @@ import {
   printAnalyzeResult,
   runAnalyzeCommand
 } from "./analyze";
+import { getLocPayload, printLocResult, runLocCommand } from "./loc";
 import { detectCurrentRepositoryFromGitRemote } from "../utils/git";
-import { formatSizeFromKb, formatStars, kbToMbRounded } from "../utils/size";
+import {
+  formatCompactCount,
+  formatSizeFromKb,
+  formatStars,
+  kbToMbRounded
+} from "../utils/size";
 
 export type MultiRepoSort = "size" | "stars" | "name";
 
@@ -85,6 +91,7 @@ async function mapWithConcurrency<T, R>(
 
 const REPO_METADATA_CONCURRENCY = 4;
 const ANALYZE_FETCH_CONCURRENCY = 2;
+const LOC_FETCH_CONCURRENCY = 2;
 
 function sortRepoRows(
   rows: RepoOutputPayload[],
@@ -126,6 +133,8 @@ export async function runRepoCommand(
 
   console.log(`Repository: ${metadata.fullName}`);
   console.log(`Size: ${formatSizeFromKb(metadata.sizeKb)}`);
+  const loc = await getLocPayload(owner, repo);
+  console.log(`Lines: ${formatCompactCount(loc.total_lines)}`);
   console.log(`Stars: ${formatStars(metadata.stargazersCount)}`);
   console.log(`Language: ${metadata.language ?? "Unknown"}`);
 }
@@ -206,8 +215,12 @@ export async function runRepositoriesCommand(
   repositoryInputs: string[],
   jsonOutput: boolean,
   analyze = false,
+  loc = false,
   sort: MultiRepoSort = "size"
 ): Promise<void> {
+  if (analyze && loc) {
+    throw new Error('Use either "--analyze" or "--loc", not both together.');
+  }
   const effectiveInputs =
     repositoryInputs.length > 0
       ? repositoryInputs
@@ -248,6 +261,39 @@ export async function runRepositoriesCommand(
     return;
   }
 
+  if (loc) {
+    if (jsonOutput) {
+      const payloads = await mapWithConcurrency(
+        parsedArgs,
+        LOC_FETCH_CONCURRENCY,
+        async (item) => getLocPayload(item.owner, item.repo)
+      );
+      console.log(
+        JSON.stringify(payloads.length === 1 ? payloads[0] : payloads, null, 2)
+      );
+      return;
+    }
+
+    if (parsedArgs.length === 1) {
+      const only = parsedArgs[0]!;
+      await runLocCommand(only.owner, only.repo);
+      return;
+    }
+
+    const payloads = await mapWithConcurrency(
+      parsedArgs,
+      LOC_FETCH_CONCURRENCY,
+      async (item) => getLocPayload(item.owner, item.repo)
+    );
+    for (let i = 0; i < payloads.length; i++) {
+      printLocResult(payloads[i]!);
+      if (i < payloads.length - 1) {
+        console.log("");
+      }
+    }
+    return;
+  }
+
   const results = await mapWithConcurrency(
     parsedArgs,
     REPO_METADATA_CONCURRENCY,
@@ -268,8 +314,11 @@ export async function runRepositoriesCommand(
 
   if (sorted.length === 1) {
     const result = sorted[0]!;
+    const only = parsedArgs[0]!;
+    const loc = await getLocPayload(only.owner, only.repo);
     console.log(`Repository: ${result.repository}`);
     console.log(`Size: ${formatSizeFromKb(result.size_mb * 1024)}`);
+    console.log(`Lines: ${formatCompactCount(loc.total_lines)} `);
     console.log(`Stars: ${formatStars(result.stars)}`);
     console.log(`Language: ${result.language}`);
     return;

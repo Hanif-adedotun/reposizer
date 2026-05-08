@@ -24,9 +24,10 @@ Language: C
 - 📦 Works with `npx` (no global install required)
 - 🧩 JSON output for scripts and CI tooling
 - 🏢 Organization repository scanning
-- 🔎 Current repository auto-detection (via git remote)
+- 🔎 Current repository auto-detection (via `.git/config`)
 - 📚 Multi-repository lookup in one command
-- 📊 Directory analysis (planned)
+- 📊 Directory analysis (no clone)
+- 🧮 Approximate LOC analysis (no clone)
 
 ## Installation
 
@@ -54,6 +55,7 @@ reposizer openai/gym
 
 ```bash
 reposizer openai/gym vercel/next.js torvalds/linux
+reposizer openai/gym vercel/next.js --sort stars
 ```
 
 ### Detect current repository automatically
@@ -67,6 +69,19 @@ reposizer
 ```bash
 reposizer org openai
 reposizer org openai --limit 50 --json
+```
+
+### Analyze top directories (no clone)
+
+```bash
+reposizer vercel/next.js --analyze
+```
+
+### Estimate lines of code (no clone)
+
+```bash
+reposizer vercel/next.js --loc
+reposizer vercel/next.js --loc --json
 ```
 
 ### JSON output
@@ -98,7 +113,8 @@ reposizer your-org/private-repo
 - [x] Organization scanning
 - [x] Current repository auto-detection
 - [x] Multi-repository support
-- [ ] Directory size analysis
+- [x] Directory size analysis
+- [x] Approximate LOC analysis
 - [ ] CI/CD threshold mode
 - [ ] Repository growth tracking
 

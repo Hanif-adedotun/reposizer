@@ -21,6 +21,10 @@ program
     "Approximate top-level directory sizes from Git tree metadata (no full clone)"
   )
   .option(
+    "--loc",
+    "Approximate lines of code using Git tree metadata (no full clone)"
+  )
+  .option(
     "--sort <field>",
     "When comparing multiple repositories: sort by size, stars, or name",
     "size"
@@ -28,7 +32,7 @@ program
   .action(
     async (
       repositories: string[] = [],
-      options: { json?: boolean; analyze?: boolean; sort?: string }
+      options: { json?: boolean; analyze?: boolean; loc?: boolean; sort?: string }
     ) => {
       try {
         const sortRaw = options.sort ?? "size";
@@ -45,6 +49,7 @@ program
           repositories,
           Boolean(options.json),
           Boolean(options.analyze),
+          Boolean(options.loc),
           sortRaw as MultiRepoSort
         );
       } catch (error) {
@@ -57,7 +62,7 @@ program
   )
   .addHelpText(
     "after",
-    "\nExamples:\n  reposizer openai/gym\n  reposizer vercel/next.js facebook/react\n  reposizer vercel/next.js facebook/react --sort stars\n  reposizer vercel/next.js --analyze\n  reposizer org vercel --limit 10\n  reposizer --json"
+    "\nExamples:\n  reposizer openai/gym\n  reposizer vercel/next.js facebook/react\n  reposizer vercel/next.js facebook/react --sort stars\n  reposizer vercel/next.js --analyze\n  reposizer vercel/next.js --loc\n  reposizer org vercel --limit 10\n  reposizer --json"
   );
 
 program
