@@ -293,6 +293,7 @@ h1 span {
   border: 1px solid var(--tui-border);
   border-radius: 8px;
   padding: 0.65rem 0.75rem;
+  max-width: 100%;
 }
 
 .tui-card-title {
@@ -304,13 +305,13 @@ h1 span {
 .tui-kv {
   margin: 0;
   display: grid;
-  gap: 0.28rem;
+  grid-template-columns: max-content max-content;
+  column-gap: 1rem;
+  row-gap: 0.28rem;
 }
 
 .tui-kv div {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
+  display: contents;
 }
 
 .tui-kv dt {
@@ -463,6 +464,10 @@ h1 span {
   align-items: start;
 }
 
+.commands-demo.doc-card-split {
+  align-items: stretch;
+}
+
 .doc-tui {
   border: 1px solid var(--line);
   border-radius: 12px;
@@ -470,16 +475,119 @@ h1 span {
   background: #0d1117;
 }
 
-.doc-tui-caption {
+.commands-demo .doc-tui-live {
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
+  min-height: 100%;
+  border: 1px solid #21262d;
+  border-radius: 14px;
+  background: #0d1117;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.04) inset,
+    0 12px 36px rgba(0, 0, 0, 0.14);
+  overflow: hidden;
+}
+
+.commands-demo .doc-tui-stage {
+  display: grid;
+  grid-template-rows: 1fr;
+  flex: 1;
+  min-height: 0;
   margin: 0;
-  padding: 0.55rem 0.75rem;
+  padding: 1rem 1.05rem;
+  color: #c9d1d9;
+  font-family: "IBM Plex Mono", monospace;
   font-size: 0.72rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
+  line-height: 1.45;
+}
+
+.commands-panel h4 {
+  margin: 0;
+}
+
+.command-list {
+  list-style: none;
+  margin: 0.8rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.command-item {
+  display: grid;
+  gap: 0.2rem;
+  width: 100%;
+  margin: 0;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  text-align: left;
+  cursor: default;
+  transition:
+    background 200ms ease,
+    border-color 200ms ease;
+}
+
+.command-note {
+  font-size: 0.78rem;
   color: var(--muted);
-  background: #fbfbfa;
-  border-bottom: 1px solid var(--line);
+}
+
+.command-code {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.82rem;
+  color: #333;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+@media (min-width: 961px) {
+  .command-item {
+    cursor: pointer;
+  }
+
+  .command-item.is-active,
+  .command-item:hover,
+  .command-item:focus-visible {
+    background: #f3f6ff;
+    border-color: #dbe6ff;
+    outline: none;
+  }
+}
+
+.doc-tui-stage {
+  display: grid;
+}
+
+.doc-tui-panel {
+  grid-area: 1 / 1;
+  align-self: start;
+  opacity: 0;
+  transform: translateY(4px);
+  transition:
+    opacity 220ms ease,
+    transform 220ms ease;
+  pointer-events: none;
+}
+
+.doc-tui-panel.is-active {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+}
+
+.tui-preview-output {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .doc-tui-panel {
+    transition: none;
+    transform: none;
+  }
 }
 
 .prompt {
@@ -748,6 +856,10 @@ code {
 
   .doc-card-split {
     grid-template-columns: 1fr;
+  }
+
+  .doc-tui-live {
+    display: none;
   }
 
   .page {

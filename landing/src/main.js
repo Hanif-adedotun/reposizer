@@ -1,5 +1,76 @@
 import "./styles.css";
 import { createIcons, ShieldCheck, Workflow, Zap } from "lucide";
+import previews from "./generated/previews.json";
+
+const COMMAND_PREVIEW_KEYS = ["single", "compare", "analyze", "loc", "current"];
+
+function initCommandsDemo() {
+  const demo = document.querySelector(".commands-demo");
+  const stage = demo?.querySelector(".doc-tui-stage");
+  const items = demo?.querySelectorAll(".command-item");
+
+  if (!demo || !stage || !items?.length) {
+    return;
+  }
+
+  const desktopQuery = window.matchMedia("(min-width: 961px)");
+  if (!desktopQuery.matches) {
+    return;
+  }
+
+  for (const key of COMMAND_PREVIEW_KEYS) {
+    const html = previews[key];
+    if (!html) {
+      continue;
+    }
+
+    const panel = document.createElement("div");
+    panel.className = "doc-tui-panel";
+    panel.dataset.preview = key;
+
+    const output = document.createElement("div");
+    output.className = "tui-preview-output";
+    output.innerHTML = html;
+    panel.appendChild(output);
+
+    if (key === "single") {
+      panel.classList.add("is-active");
+    }
+
+    stage.appendChild(panel);
+  }
+
+  const panels = stage.querySelectorAll(".doc-tui-panel");
+
+  const setActive = (key) => {
+    for (const item of items) {
+      const isActive = item.dataset.preview === key;
+      item.classList.toggle("is-active", isActive);
+      item.setAttribute("aria-selected", String(isActive));
+    }
+
+    for (const panel of panels) {
+      panel.classList.toggle("is-active", panel.dataset.preview === key);
+    }
+  };
+
+  for (const item of items) {
+    const key = item.dataset.preview;
+    if (!key) {
+      continue;
+    }
+
+    item.addEventListener("pointerenter", () => {
+      setActive(key);
+    });
+
+    item.addEventListener("focus", () => {
+      setActive(key);
+    });
+  }
+}
+
+initCommandsDemo();
 
 const year = new Date().getFullYear();
 const footer = document.createElement("footer");

@@ -36,8 +36,6 @@
         <span></span>
       </button>
       <nav id="site-nav">
-        <a href="#docs">Docs</a>
-        <a href="#examples">Examples</a>
         <a href="#quickstart">Quickstart</a>
         <a href="/changelog.html">Changelog</a>
         <a
@@ -286,50 +284,81 @@ npx reposizer owner/repo
 npm install -g reposizer</code></pre>
         </article>
 
-        <article class="doc-card doc-card-split">
-          <div>
-            <h4>Common commands</h4>
-            <pre><code class="language-bash"># single repo
-reposizer openai/gym
-
-# compare multiple repos (table + optional sort)
-reposizer vercel/next.js facebook/react --sort stars
-
-# approximate directory sizes (no clone)
-reposizer vercel/next.js --analyze
-
-# approximate lines of code (no clone)
-reposizer vercel/next.js --loc
-
-# detect current repo from .git/config
-reposizer</code></pre>
+        <article class="doc-card doc-card-split commands-demo">
+          <div class="commands-panel">
+            <h4>Commands</h4>
+            <ul class="command-list" role="list">
+              <li>
+                <button
+                  type="button"
+                  class="command-item is-active"
+                  data-preview="single"
+                  aria-selected="true"
+                >
+                  <span class="command-note">single repo</span>
+                  <code class="command-code">reposizer vercel/next.js</code>
+                </button>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  class="command-item"
+                  data-preview="compare"
+                  aria-selected="false"
+                >
+                  <span class="command-note"
+                    >compare multiple repos (table + optional sort)</span
+                  >
+                  <code class="command-code"
+                    >reposizer vercel/next.js facebook/react --sort stars</code
+                  >
+                </button>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  class="command-item"
+                  data-preview="analyze"
+                  aria-selected="false"
+                >
+                  <span class="command-note"
+                    >approximate directory sizes (no clone)</span
+                  >
+                  <code class="command-code"
+                    >reposizer vercel/next.js --analyze</code
+                  >
+                </button>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  class="command-item"
+                  data-preview="loc"
+                  aria-selected="false"
+                >
+                  <span class="command-note"
+                    >approximate lines of code (no clone)</span
+                  >
+                  <code class="command-code">reposizer vercel/next.js --loc</code>
+                </button>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  class="command-item"
+                  data-preview="current"
+                  aria-selected="false"
+                >
+                  <span class="command-note"
+                    >detect current repo from .git/config</span
+                  >
+                  <code class="command-code">reposizer</code>
+                </button>
+              </li>
+            </ul>
           </div>
-          <div class="doc-tui tui-jiggle" data-jiggle>
-            <p class="doc-tui-caption">TUI output</p>
-            <div class="tui-shell compact">
-              <p class="tui-heading">Repositories</p>
-              <table class="tui-table">
-                <thead>
-                  <tr>
-                    <th>Repository</th>
-                    <th class="num">Size</th>
-                    <th class="num">Stars</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>facebook/react</td>
-                    <td class="num">1.12 GB</td>
-                    <td class="num">240k</td>
-                  </tr>
-                  <tr>
-                    <td>vercel/next.js</td>
-                    <td class="num">2.43 GB</td>
-                    <td class="num">139k</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+          <div class="doc-tui doc-tui-live tui-jiggle" data-jiggle>
+            <div class="doc-tui-stage" aria-live="polite"></div>
           </div>
         </article>
 

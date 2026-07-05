@@ -17,6 +17,22 @@ export function getTerminalWidth(margin = 2): number {
   return (process.stdout.columns ?? 80) - margin;
 }
 
+export function withTerminalWidth<T>(columns: number, fn: () => T): T {
+  const stdout = process.stdout as NodeJS.WriteStream & { columns?: number };
+  const original = stdout.columns;
+  stdout.columns = columns + 2;
+
+  try {
+    return fn();
+  } finally {
+    if (original === undefined) {
+      delete stdout.columns;
+    } else {
+      stdout.columns = original;
+    }
+  }
+}
+
 export function getTableRowWidth(colWidths: number[]): number {
   return colWidths.reduce((a, b) => a + b, 0) + colWidths.length * 3 + 1;
 }
