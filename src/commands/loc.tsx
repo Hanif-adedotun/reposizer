@@ -2,14 +2,10 @@ import { getRepoTree } from "../services/tree";
 import { renderStatic, withLoading } from "../ui/render";
 import { LocView } from "../ui/views/loc-view";
 
-type LocByLanguage = {
+type LocTopFile = {
+  path: string;
+  lines: number;
   language: string;
-  lines: number;
-};
-
-type LocByDirectory = {
-  directory: string;
-  lines: number;
 };
 
 export type LocJsonResult = {
@@ -17,8 +13,7 @@ export type LocJsonResult = {
   approx: true;
   truncated: boolean;
   total_lines: number;
-  by_language: LocByLanguage[];
-  by_directory: LocByDirectory[];
+  top_files: LocTopFile[];
   method: "size-based-estimate";
 };
 
@@ -131,20 +126,12 @@ function estimateLines(language: string, sizeBytes: number): number {
   return Math.max(1, Math.round(sizeBytes / divisor));
 }
 
-function toSortedEntries(record: Record<string, number>, limit: number) {
-  return Object.entries(record)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, limit)
-    .map(([key, value]) => ({ key, value }));
-}
-
 export async function getLocPayload(
   owner: string,
   repo: string
 ): Promise<LocJsonResult> {
   const { tree, truncated } = await getRepoTree(owner, repo);
-  const byLanguage: Record<string, number> = {};
-  const byDirectory: Record<string, number> = {};
+  const files: LocTopFile[] = [];
   let totalLines = 0;
 
   for (const item of tree) {
@@ -162,30 +149,17 @@ export async function getLocPayload(
     const language = getLanguageFromPath(path);
     const lines = estimateLines(language, sizeBytes);
     totalLines += lines;
-    byLanguage[language] = (byLanguage[language] ?? 0) + lines;
-
-    const topDir = path.includes("/") ? path.split("/")[0]! : "root";
-    byDirectory[topDir] = (byDirectory[topDir] ?? 0) + lines;
+    files.push({ path, lines, language });
   }
 
-  const topLanguages = toSortedEntries(byLanguage, 10).map(({ key, value }) => ({
-    language: key,
-    lines: value
-  }));
-  const topDirectories = toSortedEntries(byDirectory, 10).map(
-    ({ key, value }) => ({
-      directory: key,
-      lines: value
-    })
-  );
+  const topFiles = files.toSorted((a, b) => b.lines - a.lines).slice(0, 10);
 
   return {
     repository: `${owner}/${repo}`,
     approx: true,
     truncated,
     total_lines: totalLines,
-    by_language: topLanguages,
-    by_directory: topDirectories,
+    top_files: topFiles,
     method: "size-based-estimate"
   };
 }

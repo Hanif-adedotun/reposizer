@@ -11,6 +11,7 @@ import {
   formatSizeFromKb,
   formatStars
 } from "../../utils/size";
+import { getTerminalWidth } from "../../utils/text";
 
 export type RepoRow = {
   repository: string;
@@ -68,7 +69,49 @@ function toTableData(rows: RepoRow[]) {
   }));
 }
 
+function computeRepoColumnWidths(
+  tableData: ReturnType<typeof toTableData>
+) {
+  const maxWidth = getTerminalWidth();
+  const columnCount = 4;
+  const borders = columnCount * 3 + 1;
+
+  const sizeWidth = Math.max(
+    4,
+    "Size".length,
+    ...tableData.map((row) => row.size.length)
+  );
+  const starsWidth = Math.max(
+    5,
+    "Stars".length,
+    ...tableData.map((row) => row.stars.length)
+  );
+  const languageWidth = Math.max(
+    8,
+    "Language".length,
+    ...tableData.map((row) => row.language.length)
+  );
+
+  const fixedSum = sizeWidth + starsWidth + languageWidth;
+  const maxRepo = maxWidth - fixedSum - borders;
+  const idealRepo = Math.max(
+    "Repository".length,
+    ...tableData.map((row) => row.repository.length)
+  );
+  const repoWidth = Math.max(10, Math.min(idealRepo, maxRepo));
+
+  return {
+    repository: repoWidth,
+    size: sizeWidth,
+    stars: starsWidth,
+    language: languageWidth
+  };
+}
+
 export function RepoTableView({ title, subtitle, rows }: RepoTableViewProps) {
+  const tableData = toTableData(rows);
+  const widths = computeRepoColumnWidths(tableData);
+
   return (
     <Box flexDirection="column">
       <Heading level={2}>{title}</Heading>
@@ -78,14 +121,19 @@ export function RepoTableView({ title, subtitle, rows }: RepoTableViewProps) {
         </Text>
       )}
       <Table
-        data={toTableData(rows)}
+        data={tableData}
         columns={[
-          { key: "repository", header: "Repository", width: 48 },
-          { key: "size", header: "Size", align: "right" },
-          { key: "stars", header: "Stars", align: "right" },
-          { key: "language", header: "Language" }
+          { key: "repository", header: "Repository", width: widths.repository },
+          { key: "size", header: "Size", width: widths.size, align: "right" },
+          { key: "stars", header: "Stars", width: widths.stars, align: "right" },
+          {
+            key: "language",
+            header: "Language",
+            width: widths.language
+          }
         ]}
         maxRows={100}
+        maxWidth={getTerminalWidth()}
       />
     </Box>
   );

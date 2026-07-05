@@ -3,6 +3,10 @@ import { useState, useMemo } from "react";
 
 import { useTheme } from "@/components/ui/theme-provider";
 import { useInput } from "@/hooks/use-input";
+import {
+  getTableRowWidth,
+  truncate
+} from "@/src/utils/text";
 
 export interface Column<T = Record<string, unknown>> {
   key: keyof T & string;
@@ -20,6 +24,7 @@ export interface TableProps<
   selectable?: boolean;
   onSelect?: (row: T) => void;
   maxRows?: number;
+  maxWidth?: number;
   borderColor?: string;
 }
 
@@ -36,9 +41,9 @@ const pad = (
   width: number,
   align: "left" | "right" | "center" = "left"
 ): string => {
-  const s = String(str);
+  const s = truncate(String(str), width);
   if (s.length >= width) {
-    return s.slice(0, width);
+    return s;
   }
   const diff = width - s.length;
   if (align === "right") {
@@ -143,6 +148,7 @@ export const Table = <
   selectable = false,
   onSelect,
   maxRows = 20,
+  maxWidth,
   borderColor,
 }: TableProps<T>) => {
   const theme = useTheme();
@@ -190,13 +196,39 @@ export const Table = <
     }
   });
 
-  const colWidths = columns.map((col) => {
-    let dataMax = 0;
-    for (const row of data) {
-      dataMax = Math.max(dataMax, String(row[col.key] ?? "").length);
+  const colWidths = useMemo(() => {
+    const widths = columns.map((col) => {
+      let dataMax = 0;
+      for (const row of data) {
+        dataMax = Math.max(dataMax, String(row[col.key] ?? "").length);
+      }
+      return col.width ?? Math.max(col.header.length, dataMax);
+    });
+
+    if (!maxWidth || getTableRowWidth(widths) <= maxWidth) {
+      return widths;
     }
-    return col.width ?? Math.max(col.header.length, dataMax);
-  });
+
+    const minWidths = columns.map((col) => col.header.length);
+    const shrinkable = widths.map((w, i) => w - minWidths[i]!);
+    let overflow = getTableRowWidth(widths) - maxWidth;
+
+    const adjusted = [...widths];
+    while (overflow > 0) {
+      const totalShrinkable = shrinkable.reduce((a, b) => a + Math.max(0, b), 0);
+      if (totalShrinkable <= 0) {
+        break;
+      }
+      for (let i = 0; i < adjusted.length && overflow > 0; i += 1) {
+        if (shrinkable[i]! > 0) {
+          adjusted[i]! -= 1;
+          shrinkable[i]! -= 1;
+          overflow -= 1;
+        }
+      }
+    }
+    return adjusted;
+  }, [columns, data, maxWidth]);
 
   const headerCells = columns.map((col) => ({
     align: col.align ?? ("left" as const),
