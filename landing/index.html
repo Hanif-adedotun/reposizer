@@ -36,7 +36,6 @@
         <span></span>
       </button>
       <nav id="site-nav">
-        <a href="#docs">Docs</a>
         <a href="#quickstart">Quickstart</a>
         <a href="/changelog.html">Changelog</a>
         <a
@@ -110,12 +109,21 @@
             View on GitHub</a
           >
         </div>
-        <div class="terminal">
+        <div class="terminal tui-jiggle" data-jiggle>
           <p class="prompt">$ npx reposizer torvalds/linux</p>
-          <pre><code>Repository: torvalds/linux
-Size: 6.02 GB
-Stars: 230.8k
-Language: C</code></pre>
+          <div class="tui-shell" aria-hidden="true">
+            <div class="tui-card">
+              <p class="tui-card-title">torvalds/linux</p>
+              <dl class="tui-kv">
+                <div><dt>Size</dt><dd>6.02 GB</dd></div>
+                <div><dt>Stars</dt><dd>230.8k</dd></div>
+              </dl>
+              <p class="tui-meta">
+                <span class="tui-dim">Language:</span>
+                <span class="tui-badge">C</span>
+              </p>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -143,6 +151,115 @@ Language: C</code></pre>
         </article>
       </section>
 
+      <section class="examples reveal" id="examples">
+        <div class="examples-head">
+          <p class="kicker">Terminal UI</p>
+          <h2>Rich output, right in your shell</h2>
+          <p class="examples-copy">
+            Reposizer now renders structured cards, tables, and charts in the
+            terminal — built with Ink and termcn-style components.
+          </p>
+        </div>
+
+        <div class="examples-grid">
+          <article class="tui-jiggle example-card" data-jiggle>
+            <p class="example-label">Single repo</p>
+            <div class="tui-shell compact">
+              <div class="tui-card">
+                <p class="tui-card-title">vercel/next.js</p>
+                <dl class="tui-kv">
+                  <div><dt>Size</dt><dd>2.43 GB</dd></div>
+                  <div><dt>Stars</dt><dd>139k</dd></div>
+                </dl>
+                <p class="tui-meta">
+                  <span class="tui-dim">Language:</span>
+                  <span class="tui-badge">JavaScript</span>
+                </p>
+              </div>
+            </div>
+          </article>
+
+          <article class="tui-jiggle example-card" data-jiggle>
+            <p class="example-label">Compare repos</p>
+            <div class="tui-shell compact">
+              <p class="tui-heading">Repositories</p>
+              <table class="tui-table">
+                <thead>
+                  <tr>
+                    <th>Repository</th>
+                    <th class="num">Size</th>
+                    <th class="num">Stars</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>vercel/next.js</td>
+                    <td class="num">2.43 GB</td>
+                    <td class="num">139k</td>
+                  </tr>
+                  <tr>
+                    <td>facebook/react</td>
+                    <td class="num">1.12 GB</td>
+                    <td class="num">240k</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </article>
+
+          <article class="tui-jiggle example-card" data-jiggle>
+            <p class="example-label">--analyze</p>
+            <div class="tui-shell compact">
+              <p class="tui-heading">vercel/next.js</p>
+              <p class="tui-meta">
+                <span>Total</span>
+                <span class="tui-badge warn">approx</span>
+                <span>2.43 GB</span>
+              </p>
+              <p class="tui-divider">Top directories</p>
+              <div class="tui-bars">
+                <div class="tui-bar"><span class="tui-bar-label">packages</span><span class="tui-bar-fill" style="--w: 88%"></span></div>
+                <div class="tui-bar"><span class="tui-bar-label">examples</span><span class="tui-bar-fill" style="--w: 62%"></span></div>
+                <div class="tui-bar"><span class="tui-bar-label">test</span><span class="tui-bar-fill" style="--w: 41%"></span></div>
+              </div>
+            </div>
+          </article>
+
+          <article class="tui-jiggle example-card" data-jiggle>
+            <p class="example-label">--loc</p>
+            <div class="tui-shell compact">
+              <p class="tui-heading">vercel/next.js</p>
+              <p class="tui-meta">
+                <span>Total LOC</span>
+                <span class="tui-badge warn">approx</span>
+                <span>1.2M</span>
+              </p>
+              <table class="tui-table">
+                <thead>
+                  <tr>
+                    <th>File</th>
+                    <th class="num">Lines</th>
+                    <th>Language</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>packages/next/src/...</td>
+                    <td class="num">42k</td>
+                    <td>TypeScript</td>
+                  </tr>
+                  <tr>
+                    <td>packages/react-...</td>
+                    <td class="num">18k</td>
+                    <td>TypeScript</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </article>
+        </div>
+      </section>
+
       <section class="docs reveal" id="docs">
         <div class="docs-head">
           <p class="kicker">Documentation</p>
@@ -167,22 +284,82 @@ npx reposizer owner/repo
 npm install -g reposizer</code></pre>
         </article>
 
-        <article class="doc-card">
-          <h4>Common commands</h4>
-          <pre><code class="language-bash"># single repo
-reposizer openai/gym
-
-# compare multiple repos (table + optional sort)
-reposizer vercel/next.js facebook/react --sort stars
-
-# approximate directory sizes (no clone)
-reposizer vercel/next.js --analyze
-
-# approximate lines of code (no clone)
-reposizer vercel/next.js --loc
-
-# detect current repo from .git/config
-reposizer</code></pre>
+        <article class="doc-card doc-card-split commands-demo">
+          <div class="commands-panel">
+            <h4>Commands</h4>
+            <ul class="command-list" role="list">
+              <li>
+                <button
+                  type="button"
+                  class="command-item is-active"
+                  data-preview="single"
+                  aria-selected="true"
+                >
+                  <span class="command-note">single repo</span>
+                  <code class="command-code">reposizer vercel/next.js</code>
+                </button>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  class="command-item"
+                  data-preview="compare"
+                  aria-selected="false"
+                >
+                  <span class="command-note"
+                    >compare multiple repos (table + optional sort)</span
+                  >
+                  <code class="command-code"
+                    >reposizer vercel/next.js facebook/react --sort stars</code
+                  >
+                </button>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  class="command-item"
+                  data-preview="analyze"
+                  aria-selected="false"
+                >
+                  <span class="command-note"
+                    >approximate directory sizes (no clone)</span
+                  >
+                  <code class="command-code"
+                    >reposizer vercel/next.js --analyze</code
+                  >
+                </button>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  class="command-item"
+                  data-preview="loc"
+                  aria-selected="false"
+                >
+                  <span class="command-note"
+                    >approximate lines of code (no clone)</span
+                  >
+                  <code class="command-code">reposizer vercel/next.js --loc</code>
+                </button>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  class="command-item"
+                  data-preview="current"
+                  aria-selected="false"
+                >
+                  <span class="command-note"
+                    >detect current repo from .git/config</span
+                  >
+                  <code class="command-code">reposizer</code>
+                </button>
+              </li>
+            </ul>
+          </div>
+          <div class="doc-tui doc-tui-live tui-jiggle" data-jiggle>
+            <div class="doc-tui-stage" aria-live="polite"></div>
+          </div>
         </article>
 
         <article class="doc-card">

@@ -1,14 +1,11 @@
 import { getRepoTree } from "../services/tree";
-import { formatCompactCount } from "../utils/size";
+import { renderStatic, withLoading } from "../ui/render";
+import { LocView } from "../ui/views/loc-view";
 
-type LocByLanguage = {
+type LocTopFile = {
+  path: string;
+  lines: number;
   language: string;
-  lines: number;
-};
-
-type LocByDirectory = {
-  directory: string;
-  lines: number;
 };
 
 export type LocJsonResult = {
@@ -16,8 +13,7 @@ export type LocJsonResult = {
   approx: true;
   truncated: boolean;
   total_lines: number;
-  by_language: LocByLanguage[];
-  by_directory: LocByDirectory[];
+  top_files: LocTopFile[];
   method: "size-based-estimate";
 };
 
@@ -130,20 +126,12 @@ function estimateLines(language: string, sizeBytes: number): number {
   return Math.max(1, Math.round(sizeBytes / divisor));
 }
 
-function toSortedEntries(record: Record<string, number>, limit: number) {
-  return Object.entries(record)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, limit)
-    .map(([key, value]) => ({ key, value }));
-}
-
 export async function getLocPayload(
   owner: string,
   repo: string
 ): Promise<LocJsonResult> {
   const { tree, truncated } = await getRepoTree(owner, repo);
-  const byLanguage: Record<string, number> = {};
-  const byDirectory: Record<string, number> = {};
+  const files: LocTopFile[] = [];
   let totalLines = 0;
 
   for (const item of tree) {
@@ -161,64 +149,28 @@ export async function getLocPayload(
     const language = getLanguageFromPath(path);
     const lines = estimateLines(language, sizeBytes);
     totalLines += lines;
-    byLanguage[language] = (byLanguage[language] ?? 0) + lines;
-
-    const topDir = path.includes("/") ? path.split("/")[0]! : "root";
-    byDirectory[topDir] = (byDirectory[topDir] ?? 0) + lines;
+    files.push({ path, lines, language });
   }
 
-  const topLanguages = toSortedEntries(byLanguage, 10).map(({ key, value }) => ({
-    language: key,
-    lines: value
-  }));
-  const topDirectories = toSortedEntries(byDirectory, 10).map(
-    ({ key, value }) => ({
-      directory: key,
-      lines: value
-    })
-  );
+  const topFiles = files.toSorted((a, b) => b.lines - a.lines).slice(0, 10);
 
   return {
     repository: `${owner}/${repo}`,
     approx: true,
     truncated,
     total_lines: totalLines,
-    by_language: topLanguages,
-    by_directory: topDirectories,
+    top_files: topFiles,
     method: "size-based-estimate"
   };
 }
 
 export function printLocResult(payload: LocJsonResult): void {
-  if (payload.truncated) {
-    console.error(
-      "Warning: Git tree response was truncated by GitHub; LOC totals may be incomplete."
-    );
-  }
-
-  console.log(`Repository: ${payload.repository}`);
-  console.log(
-    `Total LOC (approx): ${formatCompactCount(payload.total_lines)}`
-  );
-  console.log("");
-  console.log("Top languages:");
-  console.log("--------------");
-  for (const row of payload.by_language) {
-    console.log(
-      `${row.language.padEnd(15)} ${formatCompactCount(row.lines)}`
-    );
-  }
-  console.log("");
-  console.log("Top directories:");
-  console.log("----------------");
-  for (const row of payload.by_directory) {
-    console.log(
-      `${row.directory.padEnd(15)} ${formatCompactCount(row.lines)}`
-    );
-  }
+  renderStatic(<LocView payload={payload} />);
 }
 
 export async function runLocCommand(owner: string, repo: string): Promise<void> {
-  const payload = await getLocPayload(owner, repo);
+  const payload = await withLoading(`Analyzing ${owner}/${repo}…`, () =>
+    getLocPayload(owner, repo)
+  );
   printLocResult(payload);
 }
