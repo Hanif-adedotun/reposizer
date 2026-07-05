@@ -64,3 +64,66 @@ if (topbar && menuToggle && siteNav) {
     });
   });
 }
+
+const jiggleCards = document.querySelectorAll("[data-jiggle]");
+
+for (const card of jiggleCards) {
+  card.setAttribute("data-jiggle-idle", "");
+
+  const maxTilt = card.classList.contains("terminal") ? 4 : 7;
+  let targetX = 0;
+  let targetY = 0;
+  let currentX = 0;
+  let currentY = 0;
+  let rafId = 0;
+
+  const applyTransform = () => {
+    currentX += (targetX - currentX) * 0.14;
+    currentY += (targetY - currentY) * 0.14;
+
+    card.style.transform = `perspective(900px) rotateX(${currentY}deg) rotateY(${currentX}deg)`;
+
+    if (
+      Math.abs(targetX - currentX) > 0.02 ||
+      Math.abs(targetY - currentY) > 0.02 ||
+      card.classList.contains("is-hovering")
+    ) {
+      rafId = requestAnimationFrame(applyTransform);
+    } else {
+      rafId = 0;
+    }
+  };
+
+  const startLoop = () => {
+    if (!rafId) {
+      rafId = requestAnimationFrame(applyTransform);
+    }
+  };
+
+  card.addEventListener("pointerenter", () => {
+    card.classList.add("is-hovering");
+    card.removeAttribute("data-jiggle-idle");
+    startLoop();
+  });
+
+  card.addEventListener("pointermove", (event) => {
+    const rect = card.getBoundingClientRect();
+    const x = (event.clientX - rect.left) / rect.width - 0.5;
+    const y = (event.clientY - rect.top) / rect.height - 0.5;
+    targetX = x * maxTilt;
+    targetY = -y * maxTilt;
+    startLoop();
+  });
+
+  card.addEventListener("pointerleave", () => {
+    card.classList.remove("is-hovering");
+    targetX = 0;
+    targetY = 0;
+    startLoop();
+    window.setTimeout(() => {
+      if (!card.classList.contains("is-hovering")) {
+        card.setAttribute("data-jiggle-idle", "");
+      }
+    }, 420);
+  });
+}
