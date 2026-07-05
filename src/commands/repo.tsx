@@ -4,17 +4,20 @@ import {
 } from "../services/github";
 import {
   getAnalyzePayload,
-  printAnalyzeResult,
   runAnalyzeCommand
 } from "./analyze";
-import { getLocPayload, printLocResult, runLocCommand } from "./loc";
+import { getLocPayload, runLocCommand } from "./loc";
 import { detectCurrentRepositoryFromGitRemote } from "../utils/git";
+import { kbToMbRounded } from "../utils/size";
+import { renderStatic, maybeLoading, withLoading } from "../ui/render";
 import {
-  formatCompactCount,
-  formatSizeFromKb,
-  formatStars,
-  kbToMbRounded
-} from "../utils/size";
+  OrgScanView,
+  RepoTableView,
+  SingleRepoView,
+  type RepoRow
+} from "../ui/views/repo-view";
+import { AnalyzeView } from "../ui/views/analyze-view";
+import { LocView } from "../ui/views/loc-view";
 
 export type MultiRepoSort = "size" | "stars" | "name";
 
@@ -93,10 +96,7 @@ const REPO_METADATA_CONCURRENCY = 4;
 const ANALYZE_FETCH_CONCURRENCY = 2;
 const LOC_FETCH_CONCURRENCY = 2;
 
-function sortRepoRows(
-  rows: RepoOutputPayload[],
-  sort: MultiRepoSort
-): RepoOutputPayload[] {
+function sortRepoRows(rows: RepoRow[], sort: MultiRepoSort): RepoRow[] {
   const copy = [...rows];
   if (sort === "size") {
     copy.sort(
@@ -118,7 +118,9 @@ export async function runRepoCommand(
   jsonOutput: boolean
 ): Promise<void> {
   const { owner, repo } = parseRepository(repositoryInput, 1);
-  const metadata = await fetchRepositoryMetadata(owner, repo);
+  const metadata = await maybeLoading(!jsonOutput, `Fetching ${owner}/${repo}…`, () =>
+    fetchRepositoryMetadata(owner, repo)
+  );
 
   if (jsonOutput) {
     const payload = {
@@ -131,78 +133,24 @@ export async function runRepoCommand(
     return;
   }
 
-  console.log(`Repository: ${metadata.fullName}`);
-  console.log(`Size: ${formatSizeFromKb(metadata.sizeKb)}`);
-  const loc = await getLocPayload(owner, repo);
-  console.log(`Lines: ${formatCompactCount(loc.total_lines)}`);
-  console.log(`Stars: ${formatStars(metadata.stargazersCount)}`);
-  console.log(`Language: ${metadata.language ?? "Unknown"}`);
+  const loc = await maybeLoading(!jsonOutput, "Estimating lines of code…", () =>
+    getLocPayload(owner, repo)
+  );
+  renderStatic(
+    <SingleRepoView
+      repository={metadata.fullName}
+      sizeKb={metadata.sizeKb}
+      stars={metadata.stargazersCount}
+      language={metadata.language ?? "Unknown"}
+      totalLines={loc.total_lines}
+    />
+  );
 }
 
-type RepoOutputPayload = {
-  repository: string;
-  size_mb: number;
-  stars: number;
-  language: string;
-};
-
-function truncate(value: string, maxWidth: number): string {
-  if (value.length <= maxWidth) {
-    return value;
-  }
-  if (maxWidth <= 1) {
-    return value.slice(0, maxWidth);
-  }
-  return `${value.slice(0, maxWidth - 1)}…`;
-}
-
-function renderOrgTable(
-  rows: Array<{
-    repository: string;
-    size_mb: number;
-    stars: number;
-    language: string;
-  }>
-): string {
-  const headers = ["Repository", "Size", "Stars", "Language"] as const;
-  const repositoryWidth = Math.min(
-    48,
-    Math.max(
-      headers[0].length,
-      ...rows.map((row) => truncate(row.repository, 48).length)
-    )
-  );
-  const sizeWidth = Math.max(
-    headers[1].length,
-    ...rows.map((row) => formatSizeFromKb(row.size_mb * 1024).length)
-  );
-  const starsWidth = Math.max(
-    headers[2].length,
-    ...rows.map((row) => formatStars(row.stars).length)
-  );
-  const languageWidth = Math.max(
-    headers[3].length,
-    ...rows.map((row) => row.language.length)
-  );
-
-  const border = `+-${"-".repeat(repositoryWidth)}-+-${"-".repeat(sizeWidth)}-+-${"-".repeat(starsWidth)}-+-${"-".repeat(languageWidth)}-+`;
-
-  const headerRow = `| ${headers[0].padEnd(repositoryWidth)} | ${headers[1].padEnd(sizeWidth)} | ${headers[2].padEnd(starsWidth)} | ${headers[3].padEnd(languageWidth)} |`;
-
-  const bodyRows = rows.map((row) => {
-    const repository = truncate(row.repository, repositoryWidth).padEnd(
-      repositoryWidth
-    );
-    const size = formatSizeFromKb(row.size_mb * 1024).padEnd(sizeWidth);
-    const stars = formatStars(row.stars).padEnd(starsWidth);
-    const language = row.language.padEnd(languageWidth);
-    return `| ${repository} | ${size} | ${stars} | ${language} |`;
-  });
-
-  return [border, headerRow, border, ...bodyRows, border].join("\n");
-}
-
-function buildPayload(repositoryInput: string, metadata: Awaited<ReturnType<typeof fetchRepositoryMetadata>>): RepoOutputPayload {
+function buildPayload(
+  repositoryInput: string,
+  metadata: Awaited<ReturnType<typeof fetchRepositoryMetadata>>
+): RepoRow {
   return {
     repository: metadata.fullName || repositoryInput,
     size_mb: kbToMbRounded(metadata.sizeKb),
@@ -230,10 +178,10 @@ export async function runRepositoriesCommand(
 
   if (analyze) {
     if (jsonOutput) {
-      const payloads = await mapWithConcurrency(
-        parsedArgs,
-        ANALYZE_FETCH_CONCURRENCY,
-        async (item) => getAnalyzePayload(item.owner, item.repo)
+      const payloads = await maybeLoading(!jsonOutput, "Analyzing repositories…", () =>
+        mapWithConcurrency(parsedArgs, ANALYZE_FETCH_CONCURRENCY, async (item) =>
+          getAnalyzePayload(item.owner, item.repo)
+        )
       );
       console.log(
         JSON.stringify(payloads.length === 1 ? payloads[0] : payloads, null, 2)
@@ -247,13 +195,13 @@ export async function runRepositoriesCommand(
       return;
     }
 
-    const payloads = await mapWithConcurrency(
-      parsedArgs,
-      ANALYZE_FETCH_CONCURRENCY,
-      async (item) => getAnalyzePayload(item.owner, item.repo)
+    const payloads = await withLoading("Analyzing repositories…", () =>
+      mapWithConcurrency(parsedArgs, ANALYZE_FETCH_CONCURRENCY, async (item) =>
+        getAnalyzePayload(item.owner, item.repo)
+      )
     );
     for (let i = 0; i < payloads.length; i++) {
-      printAnalyzeResult(payloads[i]!);
+      renderStatic(<AnalyzeView payload={payloads[i]!} />);
       if (i < payloads.length - 1) {
         console.log("");
       }
@@ -263,10 +211,10 @@ export async function runRepositoriesCommand(
 
   if (loc) {
     if (jsonOutput) {
-      const payloads = await mapWithConcurrency(
-        parsedArgs,
-        LOC_FETCH_CONCURRENCY,
-        async (item) => getLocPayload(item.owner, item.repo)
+      const payloads = await maybeLoading(!jsonOutput, "Analyzing lines of code…", () =>
+        mapWithConcurrency(parsedArgs, LOC_FETCH_CONCURRENCY, async (item) =>
+          getLocPayload(item.owner, item.repo)
+        )
       );
       console.log(
         JSON.stringify(payloads.length === 1 ? payloads[0] : payloads, null, 2)
@@ -280,13 +228,13 @@ export async function runRepositoriesCommand(
       return;
     }
 
-    const payloads = await mapWithConcurrency(
-      parsedArgs,
-      LOC_FETCH_CONCURRENCY,
-      async (item) => getLocPayload(item.owner, item.repo)
+    const payloads = await withLoading("Analyzing lines of code…", () =>
+      mapWithConcurrency(parsedArgs, LOC_FETCH_CONCURRENCY, async (item) =>
+        getLocPayload(item.owner, item.repo)
+      )
     );
     for (let i = 0; i < payloads.length; i++) {
-      printLocResult(payloads[i]!);
+      renderStatic(<LocView payload={payloads[i]!} />);
       if (i < payloads.length - 1) {
         console.log("");
       }
@@ -294,13 +242,11 @@ export async function runRepositoriesCommand(
     return;
   }
 
-  const results = await mapWithConcurrency(
-    parsedArgs,
-    REPO_METADATA_CONCURRENCY,
-    async (item) => {
+  const results = await maybeLoading(!jsonOutput, "Fetching repository metadata…", () =>
+    mapWithConcurrency(parsedArgs, REPO_METADATA_CONCURRENCY, async (item) => {
       const metadata = await fetchRepositoryMetadata(item.owner, item.repo);
       return buildPayload(item.input, metadata);
-    }
+    })
   );
 
   const sorted = sortRepoRows(results, sort);
@@ -315,18 +261,28 @@ export async function runRepositoriesCommand(
   if (sorted.length === 1) {
     const result = sorted[0]!;
     const only = parsedArgs[0]!;
-    const loc = await getLocPayload(only.owner, only.repo);
-    console.log(`Repository: ${result.repository}`);
-    console.log(`Size: ${formatSizeFromKb(result.size_mb * 1024)}`);
-    console.log(`Lines: ${formatCompactCount(loc.total_lines)} `);
-    console.log(`Stars: ${formatStars(result.stars)}`);
-    console.log(`Language: ${result.language}`);
+    const locPayload = await maybeLoading(true, "Estimating lines of code…", () =>
+      getLocPayload(only.owner, only.repo)
+    );
+    renderStatic(
+      <SingleRepoView
+        repository={result.repository}
+        sizeKb={result.size_mb * 1024}
+        stars={result.stars}
+        language={result.language}
+        totalLines={locPayload.total_lines}
+      />
+    );
     return;
   }
 
-  console.log(`Comparing ${sorted.length} repositories (sorted by ${sort}):`);
-  console.log("");
-  console.log(renderOrgTable(sorted));
+  renderStatic(
+    <RepoTableView
+      title={`Comparing ${sorted.length} repositories`}
+      subtitle={`Sorted by ${sort}`}
+      rows={sorted}
+    />
+  );
 }
 
 export async function runOrganizationCommand(
@@ -334,7 +290,9 @@ export async function runOrganizationCommand(
   jsonOutput: boolean,
   limit: number
 ): Promise<void> {
-  const repositories = await fetchOrganizationRepositories(organization, limit);
+  const repositories = await maybeLoading(!jsonOutput, `Scanning ${organization} repositories…`, () =>
+    fetchOrganizationRepositories(organization, limit)
+  );
   const payload = repositories
     .map((repo) => ({
       repository: repo.fullName,
@@ -349,16 +307,7 @@ export async function runOrganizationCommand(
     return;
   }
 
-  console.log(`Organization: ${organization}`);
-  console.log(`Repositories scanned: ${payload.length}`);
-  console.log("");
-
-  if (payload.length === 0) {
-    console.log(
-      "No repositories to show. The organization may have no visible repos, or all of them may be archived or disabled."
-    );
-    return;
-  }
-
-  console.log(renderOrgTable(payload));
+  renderStatic(
+    <OrgScanView organization={organization} rows={payload} />
+  );
 }

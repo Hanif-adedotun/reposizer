@@ -6,6 +6,8 @@ import {
   runOrganizationCommand,
   runRepositoriesCommand
 } from "../src/commands/repo";
+import { renderError } from "../src/ui/render";
+import { ErrorView } from "../src/ui/views/error-view";
 
 const program = new Command();
 
@@ -55,7 +57,7 @@ program
       } catch (error) {
         const message =
           error instanceof Error ? error.message : "Unexpected error occurred";
-        console.error(`Error: ${message}`);
+        renderError(<ErrorView message={message} />);
         process.exitCode = 1;
       }
     }
@@ -86,7 +88,7 @@ program
       } catch (error) {
         const message =
           error instanceof Error ? error.message : "Unexpected error occurred";
-        console.error(`Error: ${message}`);
+        renderError(<ErrorView message={message} />);
         process.exitCode = 1;
       }
     }

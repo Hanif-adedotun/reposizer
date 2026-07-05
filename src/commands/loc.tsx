@@ -1,5 +1,6 @@
 import { getRepoTree } from "../services/tree";
-import { formatCompactCount } from "../utils/size";
+import { renderStatic, withLoading } from "../ui/render";
+import { LocView } from "../ui/views/loc-view";
 
 type LocByLanguage = {
   language: string;
@@ -190,35 +191,12 @@ export async function getLocPayload(
 }
 
 export function printLocResult(payload: LocJsonResult): void {
-  if (payload.truncated) {
-    console.error(
-      "Warning: Git tree response was truncated by GitHub; LOC totals may be incomplete."
-    );
-  }
-
-  console.log(`Repository: ${payload.repository}`);
-  console.log(
-    `Total LOC (approx): ${formatCompactCount(payload.total_lines)}`
-  );
-  console.log("");
-  console.log("Top languages:");
-  console.log("--------------");
-  for (const row of payload.by_language) {
-    console.log(
-      `${row.language.padEnd(15)} ${formatCompactCount(row.lines)}`
-    );
-  }
-  console.log("");
-  console.log("Top directories:");
-  console.log("----------------");
-  for (const row of payload.by_directory) {
-    console.log(
-      `${row.directory.padEnd(15)} ${formatCompactCount(row.lines)}`
-    );
-  }
+  renderStatic(<LocView payload={payload} />);
 }
 
 export async function runLocCommand(owner: string, repo: string): Promise<void> {
-  const payload = await getLocPayload(owner, repo);
+  const payload = await withLoading(`Analyzing ${owner}/${repo}…`, () =>
+    getLocPayload(owner, repo)
+  );
   printLocResult(payload);
 }

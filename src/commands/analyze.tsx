@@ -1,5 +1,6 @@
 import { getRepoTree } from "../services/tree";
-import { formatBytes } from "../utils/size";
+import { renderStatic, withLoading } from "../ui/render";
+import { AnalyzeView } from "../ui/views/analyze-view";
 
 export type AnalyzeJsonResult = {
   repository: string;
@@ -50,24 +51,12 @@ export async function getAnalyzePayload(
 }
 
 export function printAnalyzeResult(payload: AnalyzeJsonResult): void {
-  if (payload.truncated) {
-    console.error(
-      "Warning: Git tree response was truncated by GitHub; directory totals may be incomplete."
-    );
-  }
-
-  console.log(`Repository: ${payload.repository}`);
-  console.log(`Total (approx): ${formatBytes(payload.total_bytes)}`);
-  console.log("");
-  console.log("Top directories:");
-  console.log("----------------");
-
-  for (const { directory, bytes } of payload.top_directories) {
-    console.log(`${directory.padEnd(15)} ${formatBytes(bytes)}`);
-  }
+  renderStatic(<AnalyzeView payload={payload} />);
 }
 
 export async function runAnalyzeCommand(owner: string, repo: string): Promise<void> {
-  const payload = await getAnalyzePayload(owner, repo);
+  const payload = await withLoading(`Analyzing ${owner}/${repo}…`, () =>
+    getAnalyzePayload(owner, repo)
+  );
   printAnalyzeResult(payload);
 }
